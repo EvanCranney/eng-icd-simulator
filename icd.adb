@@ -86,9 +86,8 @@ package body ICD is
         if Def.IsOn then
 
             -- update medical history
+            UpdateHistory(Def, Mon);
 
-            -- update medical history
-            
 
             -- compute the target impulse
             Impulse := 0;
