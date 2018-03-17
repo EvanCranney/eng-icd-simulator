@@ -51,7 +51,7 @@ package body ClosedLoop is
     end;
 
     -- turn the system off
-    procedure SwitchModeOff is
+    procedure RespondSwitchModeOff(Msg : Network.NetworkMessage) is
     begin
         HRM.Off(Mon);
         ICD.Off(Def);
@@ -59,38 +59,65 @@ package body ClosedLoop is
     end;
 
     -- turn the system of
-    procedure SwitchModeOn is
+    procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
     begin
         HRM.On(Mon, Hrt);
         ICD.On(Def);
         ImpulseGenerator.On(Gen);
     end;
 
-                --when ReadRateHistoryRequest
-                --when ChangeSettingsRequest
-                --when ChangeSettingsResponse
-                --when ReadSettingsResponse
-                --when ReadRateHistoryResponse
+    -- respond with rate history confirmation/rejection
+    procedure RespondReadRateHistoryRequest(Msg : Network.NetworkMessage) is
+    begin
+        Network.SendMessage(Net,
+            (MessageType => Network.ReadRateHistoryResponse,
+             History => null,
+             HDestination => Msg.HSource));
+    end;
+
+    -- respond with settings read confirmation/rejection
+    procedure RespondReadSettingsRequest(Msg : Network.NetworkMessage) is
+    begin
+        Network.SendMessage(
+            Net,
+            (
+                MessageType => Network.ReadSettingsResponse,
+                RDestination => Msg.RSource,
+                RTachyBound => 0,
+                RJoulesToDeliver => 0
+            )
+        );
+    end;
+
+    -- respond with settings change confirmation/rejection
+    procedure RespondChangeSettingsRequest(Msg : Network.NetworkMessage) is
+    begin
+        Network.SendMessage(
+            Net,
+            (
+                MessageType => Network.ChangeSettingsResponse,
+                CDestination => Msg.CSource
+            )    
+        );
+    end;
 
     -- checks if a message is authorized
-    procedure ExecuteMessage(Msg : in Network.NetworkMessage) is
+    procedure RespondNetworkMessage(Msg : in Network.NetworkMessage) is
     begin
-
         case Msg.MessageType is
-            when Network.ModeOn => 
-                if (Msg.MOnSource = Cardiologist or 
-                        Msg.MOnSource = Assistant) then
-                    SwitchModeOn;
-                end if;
-            when Network.ModeOff =>
-                if (Msg.MOffSource = Cardiologist or
-                        Msg.MOffSource = Assistant) then
-                    SwitchModeOff;
-                end if;
+            when Network.ModeOn =>
+                RespondSwitchModeOn(Msg);
+            when Network.ModeOff => 
+                RespondSwitchModeoff(Msg);
+            when Network.ReadRateHistoryRequest =>
+                RespondReadRateHistoryRequest(Msg);
+            when Network.ReadSettingsRequest =>
+                RespondReadSettingsRequest(Msg);
+            when Network.ChangeSettingsRequest =>
+                RespondChangeSettingsRequest(Msg);
             when others =>
                 null;
         end case;
-
     end;
 
     -- simulate one tick of the clock
@@ -104,7 +131,7 @@ package body ClosedLoop is
         -- fetch new messages from network
         Network.GetNewMessage(Net, NewMsgAvailable, Msg);
         if NewMsgAvailable then
-            ExecuteMessage(Msg);
+            RespondNetworkMessage(Msg);
         end if;
 
         -- tick remaining components
