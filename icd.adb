@@ -7,8 +7,11 @@ package body ICD is
     procedure Init(Def : out ICDType) is
     begin
         Def.IsOn := False;
-        Def.JoulesToDeliver := 0;
-        -- Def.Hist := History;
+        -- RateHistory automatically instantiated
+        Def.TachyBPMThresh := 100;
+        Def.TachyImpulse := 2;
+        Def.TachyNumImpulses := 10;
+        Def.VentFibImpulse := 30;
     end Init;
 
     procedure On(Def : in out ICDType) is
@@ -26,55 +29,76 @@ package body ICD is
         return Def.IsOn;
     end IsOn;
 
-    function HasVentricularFibrillation(Def : in ICDType) return Boolean is
+    -- update medical history
+    procedure UpdateHistory(
+        Def : in out ICDType;
+        Mon : in HRM.HRMType
+    ) is
     begin
-        return Def.Hist(1) > 100;
-    end HasVentricularFibrillation;
+        -- move each record t to t-1
+        move_records_backward:
+            for I in HistoryIndex'First+1 .. HistoryIndex'Last loop
+                Def.History.Rates(I) := Def.History.Rates(I-1);
+                --Def.RateHistory.Times(I) := Def.RateHistory.Times(I-1);
+            end loop move_records_backward;
 
-    function HasTachycardia(Def: in ICDType) return Boolean is
+        -- update the record for t = 0
+        HRM.GetRate(Mon, Def.History.Rates(Def.History.Rates'First));
+    end;
+
+    -- check if is tacycardic
+    function IsTachycardic(Def : in ICDType) return Boolean is
+    begin
+        -- check if BPM exceeds Tachy 
+        return Def.History.Rates'First > Def.TachyBPMThresh;
+    end IsTachycardic;
+
+    -- check if is fibrillating
+    function IsFibrillating(Def: in ICDType) return Boolean is
         Numer : Integer;
         Denom : Integer;
-        AverageHeartRateChange : Integer;
+        AvgRateChange : Integer;
     begin
+        -- sum up average differences
         Numer := 0;
         for I in 1 .. 6 loop
-            Numer := Numer + abs (Def.Hist(I) - Def.Hist(I+1));
+            Numer := Numer + abs(Def.History.Rates(I)-Def.History.Rates(I+1));
         end loop;
+
+        -- divide by num differences
         Denom := 6;
-        AverageHeartRateChange := Numer / Denom;
+
+        -- compute average heart rate change
+        AvgRateChange := Numer / Denom;
         
-        if AverageHeartRateChange >= 10 then
-            return True;
-        else
-            return False;
-        end if;
-    end HasTachycardia;
+        -- check if average rate change exceeds limit
+        return AvgRateChange >= Def.TachyBPMThresh;
+    end IsFibrillating;
 
     procedure Tick(
         Def : in out ICDType;
         Mon : in HRM.HRMType;
-        Gen : in out ImpulseGenerator.GeneratorType) is
+        Gen : in out ImpulseGenerator.GeneratorType
+    ) is
         Impulse : Measures.Joules;
     begin
-        -- check if the Def is on
+        -- check if the fribrillator is in mode on
         if Def.IsOn then
 
             -- update medical history
-            Update_Medical_History:
-                for I in 2 .. 10 loop
-                    Def.Hist (I) := Def.Hist(I-1);
-                end loop Update_Medical_History;
-            HRM.GetRate(Mon, Def.Hist(1));
+
+            -- update medical history
+            
 
             -- compute the target impulse
             Impulse := 0;
             
             -- rule for tachycardia
-            if HasTachyCardia(Def) then
+            if IsTachycardic(Def) then
                 Impulse := 2;
                 -- and go into tachycardia state
-            elsif HasVentricularFibrillation(Def) then
-                Impulse := Def.JoulesToDeliver;
+            elsif IsFibrillating(Def) then
+                Impulse := Def.VentFibImpulse;
             end if;
 
             -- send the impulse to the Impulse Generator
