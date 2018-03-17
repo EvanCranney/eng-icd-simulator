@@ -58,6 +58,21 @@ package body ClosedLoop is
         ImpulseGenerator.Off(Gen);
     end;
 
+    -- format ICD representation of medical history to network represenation
+    function GetMedicalHistory(Def: ICD.ICDType)
+        return Network.RateHistory is
+        ICDHistory : ICD.HistoryType;
+        NetworkHistory : Network.RateHistory;
+    begin
+        ICDHistory := ICD.GetHistory(Def);
+        for I in ICD.HistoryIndex'First .. ICD.HistoryIndex'First+4 loop
+            NetworkHistory(I+1).Rate := ICDHistory(I).Rate;
+            NetworkHistory(I+1).Time := ICDHistory(I).Time;
+        end loop;
+        return NetworkHistory;
+    end;
+    
+
     -- turn the system of
     procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
     begin
@@ -71,7 +86,7 @@ package body ClosedLoop is
     begin
         Network.SendMessage(Net,
             (MessageType => Network.ReadRateHistoryResponse,
-             History => null,
+             History => GetMedicalHistory(Def),
              HDestination => Msg.HSource));
     end;
 
@@ -83,8 +98,8 @@ package body ClosedLoop is
             (
                 MessageType => Network.ReadSettingsResponse,
                 RDestination => Msg.RSource,
-                RTachyBound => 0,
-                RJoulesToDeliver => 0
+                RTachyBound => ICD.GetTachyThresh(Def),
+                RJoulesToDeliver => ICD.GetTachyImpulse(Def)
             )
         );
     end;

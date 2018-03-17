@@ -8,10 +8,10 @@ package body ICD is
     begin
         Def.IsOn := False;
         -- RateHistory automatically instantiated
-        Def.TachyBPMThresh := 100;
+        Def.TachyThresh := 100;
         Def.TachyImpulse := 2;
         Def.TachyNumImpulses := 10;
-        Def.VentFibImpulse := 30;
+        Def.FibImpulse := 30;
     end Init;
 
     procedure On(Def : in out ICDType) is
@@ -29,6 +29,26 @@ package body ICD is
         return Def.IsOn;
     end IsOn;
 
+    function GetTachyThresh(Def : in ICDType) return Measures.BPM is
+    begin
+        return Def.TachyThresh;
+    end GetTachyThresh;
+
+    function GetTachyImpulse(Def : in ICDType) return Measures.Joules is
+    begin
+        return Def.TachyImpulse;
+    end GetTachyImpulse;
+
+    function GetFibImpulse(Def : in ICDType) return Measures.Joules is
+    begin
+        return Def.FibImpulse;
+    end GetFibImpulse;
+
+    function GetHistory(Def : in ICDType) return HistoryType is
+    begin 
+        return Def.History;
+    end GetHistory;
+
     -- update medical history
     procedure UpdateHistory(
         Def : in out ICDType;
@@ -38,19 +58,19 @@ package body ICD is
         -- move each record t to t-1
         move_records_backward:
             for I in HistoryIndex'First+1 .. HistoryIndex'Last loop
-                Def.History.Rates(I) := Def.History.Rates(I-1);
+                Def.History(I).Rate := Def.History(I-1).Rate;
                 --Def.RateHistory.Times(I) := Def.RateHistory.Times(I-1);
             end loop move_records_backward;
 
         -- update the record for t = 0
-        HRM.GetRate(Mon, Def.History.Rates(Def.History.Rates'First));
+        HRM.GetRate(Mon, Def.History(HistoryIndex'First).Rate);
     end;
 
     -- check if is tacycardic
     function IsTachycardic(Def : in ICDType) return Boolean is
     begin
         -- check if BPM exceeds Tachy 
-        return Def.History.Rates'First > Def.TachyBPMThresh;
+        return Def.History(HistoryIndex'First).Rate > Def.TachyThresh;
     end IsTachycardic;
 
     -- check if is fibrillating
@@ -62,7 +82,7 @@ package body ICD is
         -- sum up average differences
         Numer := 0;
         for I in 1 .. 6 loop
-            Numer := Numer + abs(Def.History.Rates(I)-Def.History.Rates(I+1));
+            Numer := Numer + abs(Def.History(I).Rate-Def.History(I+1).Rate);
         end loop;
 
         -- divide by num differences
@@ -72,7 +92,7 @@ package body ICD is
         AvgRateChange := Numer / Denom;
         
         -- check if average rate change exceeds limit
-        return AvgRateChange >= Def.TachyBPMThresh;
+        return AvgRateChange >= Def.TachyThresh;
     end IsFibrillating;
 
     procedure Tick(
@@ -94,10 +114,10 @@ package body ICD is
             
             -- rule for tachycardia
             if IsTachycardic(Def) then
-                Impulse := 2;
+                Impulse := Def.TachyImpulse;
                 -- and go into tachycardia state
             elsif IsFibrillating(Def) then
-                Impulse := Def.VentFibImpulse;
+                Impulse := Def.FibImpulse;
             end if;
 
             -- send the impulse to the Impulse Generator

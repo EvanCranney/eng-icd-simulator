@@ -4,22 +4,21 @@ with Measures;
 
 package ICD is
 
-    subtype HistoryIndex is Integer range 0 .. 9;
-    type RateHistoryType is array (HistoryIndex) of Measures.BPM;
-    type TimeHistoryType is array (HistoryIndex) of Measures.TickCount;
-
-    type HistoryType is record
-        Rates : RateHistoryType;
-        Times : TimeHistoryType;
+    type HistoryRecord is record
+        Rate : Measures.BPM;
+        Time : Measures.TickCount;
     end record;
+
+    subtype HistoryIndex is Integer range 0 .. 9;
+    type HistoryType is array (HistoryIndex) of HistoryRecord;
 
     type ICDType is record
         IsOn : Boolean;
         History : HistoryType;
-        TachyBPMThresh : Measures.BPM;
+        TachyThresh : Measures.BPM;
         TachyImpulse : Measures.Joules;
         TachyNumImpulses : Integer;
-        VentFibImpulse : Measures.Joules;
+        FibImpulse : Measures.Joules;
     end record;
 
     -- create an initialize a new ICD
@@ -33,6 +32,14 @@ package ICD is
 
     -- query the status of the defribulator
     function IsOn(Def : in ICDType) return Boolean;
+
+    function GetTachyThresh(Def : in ICDType) return Measures.BPM;
+
+    function GetTachyImpulse(Def : in ICDType) return Measures.Joules;
+
+    function GetFibImpulse(Def : in ICDType) return Measures.Joules;
+
+    function GetHistory(Def : in ICDType) return HistoryType;
 
     -- Tick the clock: read latest BPM & compute impulse
     procedure Tick(
