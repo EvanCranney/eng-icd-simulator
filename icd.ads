@@ -14,12 +14,18 @@ package ICD is
 
     type ICDType is record
         IsOn : Boolean;
-        ClockTime : Measures.TickCount;
+        Time : Measures.TickCount;
+        History : HistoryType;    
+
         Impulse : Measures.Joules;
-        History : HistoryType;
+        ImpulseCount : Integer;
+        ImpulseFreq : Measures.TickCount;
+        ImpulseStart : Measures.TickCount;
+
         TachyThresh : Measures.BPM;
         TachyImpulse : Measures.Joules;
-        TachyNumImpulses : Integer;
+        TachyImpulseCount : Integer;
+
         FibImpulse : Measures.Joules;
     end record;
 
