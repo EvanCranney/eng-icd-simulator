@@ -125,7 +125,9 @@ package body ClosedLoop is
                 (not ICD.IsOn(Def)) then
             -- change settings
             -- set tachy thresh
+            ICD.SetTachyThresh(Def, Msg.CTachyBound);
             -- set fib impulse
+            ICD.SetFibImpulse(Def, Msg.CJoulesToDeliver);
             -- send response
             Network.SendMessage(Net,
                 (MessageType => Network.ChangeSettingsResponse,
