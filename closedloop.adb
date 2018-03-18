@@ -15,12 +15,11 @@ package body ClosedLoop is
     Mon : HRM.HRMType;
     Def : ICD.ICDType;
     Gen : ImpulseGenerator.GeneratorType;
+    Net : Network.Network;
 
     KnownPrincipals : access Network.PrincipalArray;
     Cardiologist, Assistant, Patient : Principal.PrincipalPtr;
 
-    Net : Network.Network;
-    
     -- initialize the closed loop
     procedure Init is
     begin
@@ -72,7 +71,6 @@ package body ClosedLoop is
         end loop;
         return NetworkHistory;
     end;
-    
 
     -- turn the system of
     procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
@@ -96,13 +94,10 @@ package body ClosedLoop is
     begin
         Network.SendMessage(
             Net,
-            (
-                MessageType => Network.ReadSettingsResponse,
-                RDestination => Msg.RSource,
-                RTachyBound => ICD.GetTachyThresh(Def),
-                RJoulesToDeliver => ICD.GetTachyImpulse(Def)
-            )
-        );
+            (MessageType => Network.ReadSettingsResponse,
+             RDestination => Msg.RSource,
+             RTachyBound => ICD.GetTachyThresh(Def),
+             RJoulesToDeliver => ICD.GetTachyImpulse(Def)));
     end;
 
     -- respond with settings change confirmation/rejection
@@ -110,11 +105,8 @@ package body ClosedLoop is
     begin
         Network.SendMessage(
             Net,
-            (
-                MessageType => Network.ChangeSettingsResponse,
-                CDestination => Msg.CSource
-            )    
-        );
+            (MessageType => Network.ChangeSettingsResponse,
+             CDestination => Msg.CSource));
     end;
 
     -- checks if a message is authorized
@@ -156,9 +148,8 @@ package body ClosedLoop is
         HRM.GetRate(Mon, Rate);
         
         -- Tick ICD : collect impulse
-        Impulse := 0; -- default value, silence compiler
         ICD.Tick(Def, Rate);
-        ICD.GetImpulse(Def, Impulse);
+        Impulse := ICD.GetImpulse(Def);
 
         -- pass impulse to generator
         ImpulseGenerator.SetImpulse(Gen, Impulse);

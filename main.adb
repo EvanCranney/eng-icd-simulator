@@ -1,5 +1,4 @@
 with ClosedLoop;
-with Ada.Text_IO;
 
 procedure main is
 begin
@@ -7,8 +6,7 @@ begin
     ClosedLoop.Init;
 
     clock:
-        for I in Integer range 1 .. 10000 loop
-            Ada.Text_IO.Put_Line("...");
+        for I in Integer range 1 .. 100000 loop
             ClosedLoop.Tick;
         end loop clock;
 

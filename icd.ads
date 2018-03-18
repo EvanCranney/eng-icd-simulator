@@ -21,6 +21,7 @@ package ICD is
         ImpulseCount : Integer;
         ImpulseFreq : Measures.TickCount;
         ImpulseStart : Measures.TickCount;
+        SendImpulse : Boolean;
 
         TachyThresh : Measures.BPM;
         TachyImpulse : Measures.Joules;
@@ -49,11 +50,9 @@ package ICD is
 
     function GetHistory(Def : in ICDType) return HistoryType;
     
-    procedure GetImpulse(Def : in ICDType; Impulse : in out Measures.Joules);
+    function GetImpulse(Def : in ICDType) return Measures.Joules;
 
     -- Tick the clock: read latest BPM & compute impulse
-    procedure Tick(
-        Def : in out ICDType;
-        Rate : in Measures.BPM);
+    procedure Tick(Def : in out ICDType; Rate : in Measures.BPM);
  
 end ICD;

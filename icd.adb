@@ -19,6 +19,7 @@ package body ICD is
         Def.ImpulseCount := 0;
         -- Def.ImpulseStart takes no initial value
         Def.ImpulseFreq := Measures.TickCount(0);
+        Def.SendImpulse := False;
 
         -- tachy settings
         Def.TachyThresh := Measures.BPM(100);
@@ -88,13 +89,6 @@ package body ICD is
         Def.History(HistoryIndex'First).Time := Def.Time;
     end;
 
-    -- DO WE NEED GET IMPULSE
-    procedure GetImpulse(Def : in ICDType;
-        Impulse : in out Measures.Joules) is
-    begin
-        Impulse := Def.Impulse;
-    end GetImpulse;
-
     -- check if is tacycardic
     function IsTachycardic(Def : in ICDType) return Boolean is
     begin
@@ -123,50 +117,59 @@ package body ICD is
     -- convert BPM to TPB (ticks-per-beat)
     function BPMToTPB(Rate : in Measures.BPM) return Measures.TickCount is
     begin
-        -- cannot divide by zero, return
-        if Rate = Measures.BPM(0) then
+        -- cannot divide by zero, return max possible number of ticks
+        -- note: <= is necessary because BPM can be registered as -1 if
+        -- HRM is off
+        if Rate <= Measures.BPM(0) then
             return Measures.TickCount'Last;
-        -- equals ticks-per-minute / bpm
         else
+            -- equals ticks-per-minute / bpm
             return Measures.TickCount(600/Integer(Rate));
         end if;
     end BPMToTPB;
 
     -- compute the impulse
-    procedure ComputeImpulse(Def : in out ICDType;
-        SendImpulse : out Boolean) is
+    procedure ComputeImpulse(Def : in out ICDType) is
     begin
         -- default, send no impulse
-        SendImpulse := False;
+        Def.SendImpulse := False;
 
         -- check if still need to send impulses
         if Def.ImpulseCount > 0 then
             -- check if we need to administer more impulses
             if ((Def.Time - Def.ImpulseStart) rem Def.ImpulseFreq) = 0 then
-                SendImpulse := True;
+                Def.SendImpulse := True;
             end if;
             Def.ImpulseCount := Def.ImpulseCount-1;
 
         -- check if tachycardia detected
         elsif IsTachycardic(Def) then
-            -- TachyNumImpulses at TachyImpulse
             Def.Impulse := Def.TachyImpulse;
             Def.ImpulseCount := Def.TachyImpulseCount;
             Def.ImpulseStart := Def.Time;
-            Def.ImpulseFreq := BPMToTPB(Def.History(1).Rate + 
-                Measures.BPM(15));
+            Def.ImpulseFreq := BPMToTPB(Def.History(1).Rate) + 
+                BPMToTPB( Measures.BPM(15));
         
         -- check if ventricular fibrillation detected
         elsif IsFibrillating(Def) then
-            -- FibNumImpulses at FibImpulse
             Def.Impulse := Def.FibImpulse;
-            SendImpulse := True;
+            Def.SendImpulse := True;
 
         -- otherwise set impulse to 0 joules
         else
             Def.Impulse := Measures.Joules(0);
         end if;
     end;
+
+    -- get the impulse to be sent on to impulse generator
+    function GetImpulse(Def : in ICDType) return Measures.Joules is
+    begin
+        if Def.SendImpulse then
+            return Def.Impulse;
+        else
+            return Measures.Joules(0);
+        end if;
+    end GetImpulse;
 
     -- Tick defribulator
     procedure Tick(Def : in out ICDType; Rate : in Measures.BPM) is
@@ -177,6 +180,9 @@ package body ICD is
         if Def.IsOn then
             -- update medical history
             UpdateHistory(Def, Rate);
+
+            -- compute the impulse required
+            ComputeImpulse(Def);
         end if;
 
     end Tick;
