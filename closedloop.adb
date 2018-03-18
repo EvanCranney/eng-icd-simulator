@@ -123,6 +123,10 @@ package body ClosedLoop is
         -- must be in off mode
         if (Msg.CSource=Cardiologist or Msg.CSource=Assistant) and
                 (not ICD.IsOn(Def)) then
+            -- change settings
+            -- set tachy thresh
+            -- set fib impulse
+            -- send response
             Network.SendMessage(Net,
                 (MessageType => Network.ChangeSettingsResponse,
                 CDestination => Msg.CSource));

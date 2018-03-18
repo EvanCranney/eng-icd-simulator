@@ -60,6 +60,13 @@ package body ICD is
         return Def.TachyThresh;
     end GetTachyThresh;
 
+    -- change setting : BPM threshold for tachycardia
+    procedure SetTachyThresh(Def : in out ICDType;
+        Thresh : in Measures.BPM) is
+    begin
+        Def.TachyThresh := Thresh;
+    end;
+
     -- fetch setting : impulse (joules) to respond to tachycardia
     function GetTachyImpulse(Def : in ICDType) return Measures.Joules is
     begin
@@ -71,6 +78,13 @@ package body ICD is
     begin
         return Def.FibImpulse;
     end GetFibImpulse;
+
+    -- change setting : impulse (joules) to respond to fibrillation
+    procedure SetFibImpulse(Def : in out ICDType;
+        Impulse : in Measures.Joules) is
+    begin
+        Def.FibImpulse := Impulse;
+    end;
 
     -- update medical history
     procedure UpdateHistory(Def : in out ICDType; Rate : in Measures.BPM) is

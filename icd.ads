@@ -44,9 +44,15 @@ package ICD is
 
     function GetTachyThresh(Def : in ICDType) return Measures.BPM;
 
+    procedure SetTachyThresh(Def : in out ICDType;
+        Thresh : in Measures.BPM);
+
     function GetTachyImpulse(Def : in ICDType) return Measures.Joules;
 
     function GetFibImpulse(Def : in ICDType) return Measures.Joules;
+
+    procedure SetFibImpulse(Def : in out ICDType;
+        Impulse : in Measures.Joules);
 
     function GetHistory(Def : in ICDType) return HistoryType;
     
