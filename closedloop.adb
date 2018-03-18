@@ -121,8 +121,7 @@ package body ClosedLoop is
     begin
         -- authorized cardiologist or assistant
         -- must be in off mode
-        if (Msg.CSource=Cardiologist or Msg.CSource=Assistant) and
-                (not ICD.IsOn(Def)) then
+        if (Msg.CSource=Cardiologist) and (not ICD.IsOn(Def)) then
             -- change settings
             -- set tachy thresh
             ICD.SetTachyThresh(Def, Msg.CTachyBound);
