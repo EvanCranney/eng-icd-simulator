@@ -53,9 +53,23 @@ package body ClosedLoop is
     -- turn the system off
     procedure RespondSwitchModeOff(Msg : Network.NetworkMessage) is
     begin
-        HRM.Off(Mon);
-        ICD.Off(Def);
-        ImpulseGenerator.Off(Gen);
+        -- authorized cardiologist or assistant can switch off
+        if (Msg.MOffSource=Cardiologist or Msg.MOffSource=Assistant) then
+            HRM.Off(Mon);
+            ICD.Off(Def);
+            ImpulseGenerator.Off(Gen);
+        end if;
+    end;
+
+    -- turn the system of
+    procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
+    begin
+        -- authorized cardiologist or assitant can switch on
+        if (Msg.MOnSource=Cardiologist or Msg.MOnSource=Assistant) then
+            HRM.On(Mon, Hrt);
+            ICD.On(Def);
+            ImpulseGenerator.On(Gen);
+        end if;
     end;
 
     -- format ICD representation of medical history to network represenation
@@ -64,7 +78,9 @@ package body ClosedLoop is
         ICDHistory : ICD.HistoryType;
         NetworkHistory : Network.RateHistory;
     begin
+        -- fetch ICD representation of medical history
         ICDHistory := ICD.GetHistory(Def);
+        -- then convert it to the network representation
         for I in ICD.HistoryIndex'First .. ICD.HistoryIndex'First+4 loop
             NetworkHistory(I+1).Rate := ICDHistory(I).Rate;
             NetworkHistory(I+1).Time := ICDHistory(I).Time;
@@ -72,41 +88,45 @@ package body ClosedLoop is
         return NetworkHistory;
     end;
 
-    -- turn the system of
-    procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
-    begin
-        HRM.On(Mon, Hrt);
-        ICD.On(Def);
-        ImpulseGenerator.On(Gen);
-    end;
-
     -- respond with rate history confirmation/rejection
     procedure RespondReadRateHistoryRequest(Msg : Network.NetworkMessage) is
     begin
-        Network.SendMessage(Net,
-            (MessageType => Network.ReadRateHistoryResponse,
-             History => GetMedicalHistory(Def),
-             HDestination => Msg.HSource));
+        -- authorized cardiologist, assistant, or patient
+        if (Msg.HSource=Cardiologist or Msg.HSource=Assistant or
+                Msg.HSource=Patient) then
+            Network.SendMessage(Net,
+                (MessageType => Network.ReadRateHistoryResponse,
+                History => GetMedicalHistory(Def),
+                HDestination => Msg.HSource));
+        end if;
     end;
 
     -- respond with settings read confirmation/rejection
     procedure RespondReadSettingsRequest(Msg : Network.NetworkMessage) is
     begin
-        Network.SendMessage(
-            Net,
-            (MessageType => Network.ReadSettingsResponse,
-             RDestination => Msg.RSource,
-             RTachyBound => ICD.GetTachyThresh(Def),
-             RJoulesToDeliver => ICD.GetTachyImpulse(Def)));
+        -- authorized cardiolgoist or assistant
+        -- must be in off mode
+        if (Msg.RSource=Cardiologist or Msg.RSource=Assistant) and
+                (not ICD.IsOn(Def)) then
+            Network.SendMessage(Net,
+                (MessageType => Network.ReadSettingsResponse,
+                RDestination => Msg.RSource,
+                RTachyBound => ICD.GetTachyThresh(Def),
+                RJoulesToDeliver => ICD.GetTachyImpulse(Def)));
+        end if;
     end;
 
     -- respond with settings change confirmation/rejection
     procedure RespondChangeSettingsRequest(Msg : Network.NetworkMessage) is
     begin
-        Network.SendMessage(
-            Net,
-            (MessageType => Network.ChangeSettingsResponse,
-             CDestination => Msg.CSource));
+        -- authorized cardiologist or assistant
+        -- must be in off mode
+        if (Msg.CSource=Cardiologist or Msg.CSource=Assistant) and
+                (not ICD.IsOn(Def)) then
+            Network.SendMessage(Net,
+                (MessageType => Network.ChangeSettingsResponse,
+                CDestination => Msg.CSource));
+        end if;
     end;
 
     -- checks if a message is authorized
