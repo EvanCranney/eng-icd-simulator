@@ -14,6 +14,8 @@ package ICD is
 
     type ICDType is record
         IsOn : Boolean;
+        ClockTime : Measures.TickCount;
+        Impulse : Measures.Joules;
         History : HistoryType;
         TachyThresh : Measures.BPM;
         TachyImpulse : Measures.Joules;
@@ -40,12 +42,12 @@ package ICD is
     function GetFibImpulse(Def : in ICDType) return Measures.Joules;
 
     function GetHistory(Def : in ICDType) return HistoryType;
+    
+    procedure GetImpulse(Def : in ICDType; Impulse : in out Measures.Joules);
 
     -- Tick the clock: read latest BPM & compute impulse
     procedure Tick(
         Def : in out ICDType;
-        Mon : in HRM.HRMType;
-        Gen : in out ImpulseGenerator.GeneratorType
-    );
+        Rate : in Measures.BPM);
  
 end ICD;

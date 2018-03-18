@@ -1,12 +1,14 @@
 with HRM;
 with ImpulseGenerator;
-with Measures;
+with Measures; use Measures;
 
 package body ICD is
 
     procedure Init(Def : out ICDType) is
     begin
         Def.IsOn := False;
+        Def.ClockTime := 0;
+        Def.Impulse := 0;
         -- RateHistory automatically instantiated
         Def.TachyThresh := 100;
         Def.TachyImpulse := 2;
@@ -52,19 +54,28 @@ package body ICD is
     -- update medical history
     procedure UpdateHistory(
         Def : in out ICDType;
-        Mon : in HRM.HRMType
+        Rate : in Measures.BPM;
+        ClockTime : in Measures.TickCount
     ) is
     begin
         -- move each record t to t-1
         move_records_backward:
             for I in HistoryIndex'First+1 .. HistoryIndex'Last loop
                 Def.History(I).Rate := Def.History(I-1).Rate;
-                --Def.RateHistory.Times(I) := Def.RateHistory.Times(I-1);
+                Def.History(I).Time := Def.History(I-1).Time;
             end loop move_records_backward;
 
         -- update the record for t = 0
-        HRM.GetRate(Mon, Def.History(HistoryIndex'First).Rate);
+        Def.History(HistoryIndex'First).Rate := Rate;
+        Def.History(HistoryIndex'First).Time := ClockTime;
     end;
+
+    -- 
+    procedure GetImpulse(Def : in ICDType;
+        Impulse : in out Measures.Joules) is
+    begin
+        Impulse := Def.Impulse;
+    end GetImpulse;
 
     -- check if is tacycardic
     function IsTachycardic(Def : in ICDType) return Boolean is
@@ -97,31 +108,27 @@ package body ICD is
 
     procedure Tick(
         Def : in out ICDType;
-        Mon : in HRM.HRMType;
-        Gen : in out ImpulseGenerator.GeneratorType
+        Rate : in Measures.BPM
     ) is
         Impulse : Measures.Joules;
     begin
-        -- check if the fribrillator is in mode on
+        -- update the clock
+        Def.ClockTime := Def.ClockTime + 1;
+
+        -- 
         if Def.IsOn then
-
             -- update medical history
-            UpdateHistory(Def, Mon);
-
+            UpdateHistory(Def, Rate, Def.ClockTime);
 
             -- compute the target impulse
             Impulse := 0;
-            
-            -- rule for tachycardia
+        
             if IsTachycardic(Def) then
                 Impulse := Def.TachyImpulse;
                 -- and go into tachycardia state
             elsif IsFibrillating(Def) then
                 Impulse := Def.FibImpulse;
             end if;
-
-            -- send the impulse to the Impulse Generator
-            ImpulseGenerator.SetImpulse(Gen, Impulse);
         end if;
     end Tick;
 

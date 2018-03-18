@@ -3,6 +3,7 @@ with HRM;
 with ICD;
 with ImpulseGenerator;
 with Network;
+with Measures;
 with Principal; use Principal;
 
 with Ada.Text_IO; use Ada.Text_IO;
@@ -138,21 +139,29 @@ package body ClosedLoop is
     -- simulate one tick of the clock
     procedure Tick is
         Msg : Network.NetworkMessage;
-        NewMsgAvailable : Boolean;
+        MsgAvailable : Boolean;
+        Rate: Measures.BPM;
+        Impulse : Measures.Joules;
     begin
-        -- tick the network
+        -- Tick Network : check for new message and respond
         Network.Tick(Net);
-
-        -- fetch new messages from network
-        Network.GetNewMessage(Net, NewMsgAvailable, Msg);
-        if NewMsgAvailable then
+        Network.GetNewMessage(Net, MsgAvailable, Msg);
+        if MsgAvailable then
             RespondNetworkMessage(Msg);
         end if;
 
-        -- tick remaining components
+        -- Tick Heart & Monitor : collect most recent reading
         Heart.Tick(Hrt);
         HRM.Tick(Mon, Hrt);
-        ICD.Tick(Def, Mon, Gen);
+        HRM.GetRate(Mon, Rate);
+        
+        -- Tick ICD : collect impulse
+        Impulse := 0; -- default value, silence compiler
+        ICD.Tick(Def, Rate);
+        ICD.GetImpulse(Def, Impulse);
+
+        -- pass impulse to generator
+        ImpulseGenerator.SetImpulse(Gen, Impulse);
         ImpulseGenerator.Tick(Gen, Hrt);
     end;
 
