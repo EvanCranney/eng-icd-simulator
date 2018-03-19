@@ -154,7 +154,7 @@ package body ICD is
             return Measures.TickCount'Last;
         else
             -- equals ticks-per-minute / bpm
-            return Measures.TickCount(600/Integer(Rate));
+            return Measures.TickCount(600/(Integer(Rate)+15));
         end if;
     end BPMToTPB;
 
