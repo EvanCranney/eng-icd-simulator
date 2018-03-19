@@ -80,15 +80,15 @@ package body ClosedLoop is
     -- format ICD representation of medical history to network represenation
     function GetMedicalHistory(Def: ICD.ICDType)
         return Network.RateHistory is
-        ICDHistory : ICD.HistoryType;
+        -- ICDHistory : ICD.HistoryType;
         NetworkHistory : Network.RateHistory;
     begin
         -- fetch ICD representation of medical history
-        ICDHistory := ICD.GetHistory(Def);
+        -- ICDHistory := ICD.GetHistory(Def);
         -- then convert it to the network representation
-        for I in ICD.HistoryIndex'First .. ICD.HistoryIndex'First+4 loop
-            NetworkHistory(I+1).Rate := ICDHistory(I).Rate;
-            NetworkHistory(I+1).Time := ICDHistory(I).Time;
+        for I in 1 .. Network.HISTORY_LENGTH loop
+            NetworkHistory(I).Rate := ICD.GetHistory(Def)(I).Rate;
+            NetworkHistory(I).Time := ICD.GetHistory(Def)(I).Time;
         end loop;
         return NetworkHistory;
     end;
