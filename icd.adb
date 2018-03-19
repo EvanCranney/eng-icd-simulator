@@ -153,19 +153,22 @@ package body ICD is
             -- check if we need to administer more impulses
             if ((Def.Time - Def.ImpulseStart) rem Def.ImpulseFreq) = 0 then
                 Def.SendImpulse := True;
+                Def.ImpulseCount := Def.ImpulseCount-1;
             end if;
-            Def.ImpulseCount := Def.ImpulseCount-1;
 
         -- check if tachycardia detected
         elsif IsTachycardic(Def) then
+            Ada.Text_IO.Put_Line("WARNING: Tachycardia Detected");
             Def.Impulse := Def.TachyImpulse;
             Def.ImpulseCount := Def.TachyImpulseCount;
             Def.ImpulseStart := Def.Time;
             Def.ImpulseFreq := BPMToTPB(Def.History(1).Rate) + 
                 BPMToTPB( Measures.BPM(15));
+            Def.SendImpulse := True;
         
         -- check if ventricular fibrillation detected
         elsif IsFibrillating(Def) then
+            Ada.Text_IO.Put_Line("WARNING: Fibrillation Detected");
             Def.Impulse := Def.FibImpulse;
             Def.SendImpulse := True;
 
@@ -179,6 +182,7 @@ package body ICD is
     function GetImpulse(Def : in ICDType) return Measures.Joules is
     begin
         if Def.SendImpulse then
+            Ada.Text_IO.Put_Line("WARNING: Sending Impulse - " & Def.Impulse'Image);
             return Def.Impulse;
         else
             return Measures.Joules(0);

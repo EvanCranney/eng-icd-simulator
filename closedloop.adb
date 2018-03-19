@@ -54,7 +54,9 @@ package body ClosedLoop is
     procedure RespondSwitchModeOff(Msg : Network.NetworkMessage) is
     begin
         -- authorized cardiologist or assistant can switch off
+        Ada.Text_IO.Put_Line("MESSAGE: Request Turn Off");
         if (Msg.MOffSource=Cardiologist or Msg.MOffSource=Assistant) then
+            Ada.Text_IO.Put_Line("... authorized");
             HRM.Off(Mon);
             ICD.Off(Def);
             ImpulseGenerator.Off(Gen);
@@ -65,7 +67,9 @@ package body ClosedLoop is
     procedure RespondSwitchModeOn(Msg : Network.NetworkMessage) is
     begin
         -- authorized cardiologist or assitant can switch on
+        Ada.Text_IO.Put_Line("MESSAGE: Request Switch On");
         if (Msg.MOnSource=Cardiologist or Msg.MOnSource=Assistant) then
+            Ada.Text_IO.Put_Line("... authorized");
             HRM.On(Mon, Hrt);
             ICD.On(Def);
             ImpulseGenerator.On(Gen);
@@ -91,9 +95,11 @@ package body ClosedLoop is
     -- respond with rate history confirmation/rejection
     procedure RespondReadRateHistoryRequest(Msg : Network.NetworkMessage) is
     begin
+        Ada.Text_IO.Put_Line("MESSAGE: Request Medical History");
         -- authorized cardiologist, assistant, or patient
         if (Msg.HSource=Cardiologist or Msg.HSource=Assistant or
                 Msg.HSource=Patient) then
+            Ada.Text_IO.Put_Line("... authorized");
             Network.SendMessage(Net,
                 (MessageType => Network.ReadRateHistoryResponse,
                 History => GetMedicalHistory(Def),
@@ -104,10 +110,12 @@ package body ClosedLoop is
     -- respond with settings read confirmation/rejection
     procedure RespondReadSettingsRequest(Msg : Network.NetworkMessage) is
     begin
+        Ada.Text_IO.Put_Line("MESSAGE: Request Read Settings");
         -- authorized cardiolgoist or assistant
         -- must be in off mode
         if (Msg.RSource=Cardiologist or Msg.RSource=Assistant) and
                 (not ICD.IsOn(Def)) then
+            Ada.Text_IO.Put_Line("... authorized");
             Network.SendMessage(Net,
                 (MessageType => Network.ReadSettingsResponse,
                 RDestination => Msg.RSource,
@@ -119,9 +127,11 @@ package body ClosedLoop is
     -- respond with settings change confirmation/rejection
     procedure RespondChangeSettingsRequest(Msg : Network.NetworkMessage) is
     begin
+        Ada.Text_IO.Put_Line("MESSAGE: Request Change Settings");
         -- authorized cardiologist or assistant
         -- must be in off mode
         if (Msg.CSource=Cardiologist) and (not ICD.IsOn(Def)) then
+            Ada.Text_IO.Put_Line("... authorized");
             -- change settings
             -- set tachy thresh
             ICD.SetTachyThresh(Def, Msg.CTachyBound);

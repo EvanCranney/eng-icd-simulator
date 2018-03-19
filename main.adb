@@ -6,7 +6,7 @@ begin
     ClosedLoop.Init;
 
     clock:
-        for I in Integer range 1 .. 100000 loop
+        for I in Integer range 1 .. 1000 loop
             ClosedLoop.Tick;
         end loop clock;
 
