@@ -134,6 +134,9 @@ package body ICD is
             if Def.History(I).Rate = Measures.BPM'First then
                 return False;
             end if;
+            if Def.History(I).Rate = Measures.BPM(0) then
+                return False;
+            end if;
             Sum := Sum + abs(Def.History(I).Rate-Def.History(I+1).Rate);
         end loop;
 
@@ -141,11 +144,12 @@ package body ICD is
         AvgRateChange := Sum / 6;
         
         -- check if average rate change exceeds limit
-        return AvgRateChange >= 8; -- change later
+        return AvgRateChange >= 10; -- change later
     end IsFibrillating;
 
     -- convert BPM to TPB (ticks-per-beat)
     function BPMToTPB(Rate : in Measures.BPM) return Measures.TickCount is
+        TicksFloat : Float;
     begin
         -- cannot divide by zero, return max possible number of ticks
         -- note: <= is necessary because BPM can be registered as -1 if
@@ -154,7 +158,8 @@ package body ICD is
             return Measures.TickCount'Last;
         else
             -- equals ticks-per-minute / bpm
-            return Measures.TickCount(600/(Integer(Rate)+15));
+            TicksFloat := 600.0 / (Float(Rate)+15.0);
+            return Measures.TickCount(Float'Rounding(TicksFloat));
         end if;
     end BPMToTPB;
 

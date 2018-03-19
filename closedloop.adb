@@ -60,6 +60,7 @@ package body ClosedLoop is
             HRM.Off(Mon);
             ICD.Off(Def);
             ImpulseGenerator.Off(Gen);
+            Heart.SetImpulse(Hrt, Measures.Joules(0));
         end if;
     end;
 
@@ -170,18 +171,11 @@ package body ClosedLoop is
         Rate: Measures.BPM;
         Impulse : Measures.Joules;
     begin
-        -- Tick Network : check for new message and respond
-        Network.Tick(Net);
-        Network.GetNewMessage(Net, MsgAvailable, Msg);
-        if MsgAvailable then
-            RespondNetworkMessage(Msg);
-        end if;
-
         -- Tick Heart & Monitor : collect most recent reading
         Heart.Tick(Hrt);
         HRM.Tick(Mon, Hrt);
         HRM.GetRate(Mon, Rate);
-        --Ada.Text_IO.Put_Line("Heart Rate" & Rate'Image);
+        Ada.Text_IO.Put_Line("Heart Rate" & Rate'Image);
         
         -- Tick ICD : collect impulse
         ICD.Tick(Def, Rate);
@@ -190,6 +184,13 @@ package body ClosedLoop is
         -- pass impulse to generator
         ImpulseGenerator.SetImpulse(Gen, Impulse);
         ImpulseGenerator.Tick(Gen, Hrt);
+
+         -- Tick Network : check for new message and respond
+        Network.Tick(Net);
+        Network.GetNewMessage(Net, MsgAvailable, Msg);
+        if MsgAvailable then
+            RespondNetworkMessage(Msg);
+        end if;
     end;
 
 end ClosedLoop;
