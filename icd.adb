@@ -5,7 +5,7 @@ with Measures; use Measures;
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
 
--- Implementation of ICD software
+-- implementation of ICD software
 package body ICD is
 
    -- initialize a new ICD ("Defribrillator", hence "Def")
