@@ -33,13 +33,20 @@ package body ICD is
     -- switch to ON mode
     procedure On(Def : in out ICDType) is
     begin
-        Def.IsOn := True;
+        if not IsOn(Def) then
+            Def.IsOn := True;
+            -- reset the impulse and impulse count
+            Def.Impulse := Measures.Joules(0);
+            Def.ImpulseCount := 0;
+        end if;
     end On;
 
     -- switch to OFF mode
     procedure Off(Def : in out ICDType) is
     begin
-        Def.IsOn := False;
+        if IsOn(Def) then
+            Def.IsOn := False;
+        end if;
     end Off;
 
     -- checks whether defribulator is in on mode
@@ -152,6 +159,8 @@ package body ICD is
         if Def.ImpulseCount > 0 then
             -- check if we need to administer more impulses
             if ((Def.Time - Def.ImpulseStart) rem Def.ImpulseFreq) = 0 then
+                Ada.Text_IO.Put_Line("TIME: " & Def.Time'Image);
+                Ada.Text_IO.Put_Line("Impulses remaining :" & Def.ImpulseCount'Image);
                 Def.SendImpulse := True;
                 Def.ImpulseCount := Def.ImpulseCount-1;
             end if;

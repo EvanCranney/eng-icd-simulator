@@ -57,9 +57,9 @@ package body ClosedLoop is
         Ada.Text_IO.Put_Line("MESSAGE: Request Turn Off");
         if (Msg.MOffSource=Cardiologist or Msg.MOffSource=Assistant) then
             Ada.Text_IO.Put_Line("... authorized");
-            HRM.Off(Mon);
-            ICD.Off(Def);
-            ImpulseGenerator.Off(Gen);
+            --HRM.Off(Mon);
+            --ICD.Off(Def);
+            --ImpulseGenerator.Off(Gen);
         end if;
     end;
 
@@ -181,6 +181,7 @@ package body ClosedLoop is
         Heart.Tick(Hrt);
         HRM.Tick(Mon, Hrt);
         HRM.GetRate(Mon, Rate);
+        Ada.Text_IO.Put_Line("Heart Rate" & Rate'Image);
         
         -- Tick ICD : collect impulse
         ICD.Tick(Def, Rate);
