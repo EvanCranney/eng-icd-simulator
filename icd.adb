@@ -35,9 +35,6 @@ package body ICD is
     begin
         if not IsOn(Def) then
             Def.IsOn := True;
-            -- reset the impulse and impulse count
-            Def.Impulse := Measures.Joules(0);
-            Def.ImpulseCount := 0;
         end if;
     end On;
 
@@ -46,6 +43,9 @@ package body ICD is
     begin
         if IsOn(Def) then
             Def.IsOn := False;
+            Def.Impulse := Measures.Joules(0);
+            Def.ImpulseCount := 0;
+            Def.SendImpulse := False;
         end if;
     end Off;
 
@@ -122,9 +122,18 @@ package body ICD is
         Sum : Integer;
         AvgRateChange : Integer;
     begin
+        -- check that we have contiguous medical history
+        if Def.History(6).Time - Def.History(1).Time > 5 then
+            return false;
+        end if;
+
         -- sum up average differences
         Sum := 0;
         for I in 1 .. 6 loop
+            -- can only measure ventricular fibrillation if enough history
+            if Def.History(I).Rate = Measures.BPM'First then
+                return False;
+            end if;
             Sum := Sum + abs(Def.History(I).Rate-Def.History(I+1).Rate);
         end loop;
 
@@ -132,7 +141,7 @@ package body ICD is
         AvgRateChange := Sum / 6;
         
         -- check if average rate change exceeds limit
-        return AvgRateChange >= Def.TachyThresh;
+        return AvgRateChange >= 8; -- change later
     end IsFibrillating;
 
     -- convert BPM to TPB (ticks-per-beat)
@@ -160,7 +169,7 @@ package body ICD is
             -- check if we need to administer more impulses
             if ((Def.Time - Def.ImpulseStart) rem Def.ImpulseFreq) = 0 then
                 Ada.Text_IO.Put_Line("TIME: " & Def.Time'Image);
-                Ada.Text_IO.Put_Line("Impulses remaining :" & Def.ImpulseCount'Image);
+                Ada.Text_IO.Put_Line("COUNT: Impulses remaining :" & Def.ImpulseCount'Image);
                 Def.SendImpulse := True;
                 Def.ImpulseCount := Def.ImpulseCount-1;
             end if;
@@ -171,8 +180,8 @@ package body ICD is
             Def.Impulse := Def.TachyImpulse;
             Def.ImpulseCount := Def.TachyImpulseCount;
             Def.ImpulseStart := Def.Time;
-            Def.ImpulseFreq := BPMToTPB(Def.History(1).Rate) + 
-                BPMToTPB( Measures.BPM(15));
+            Def.ImpulseFreq := BPMToTPB(Def.History(1).Rate);
+                --+ BPMToTPB( Measures.BPM(15));
             Def.SendImpulse := True;
         
         -- check if ventricular fibrillation detected
@@ -191,7 +200,7 @@ package body ICD is
     function GetImpulse(Def : in ICDType) return Measures.Joules is
     begin
         if Def.SendImpulse then
-            Ada.Text_IO.Put_Line("WARNING: Sending Impulse - " & Def.Impulse'Image);
+            Ada.Text_IO.Put_Line("IMPULSE:" & Def.Impulse'Image);
             return Def.Impulse;
         else
             return Measures.Joules(0);
