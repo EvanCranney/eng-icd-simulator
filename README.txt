@@ -1,3 +1,5 @@
+PROJECT STRATEGIES
+
 This file details the strategies employed by the team to ensure the correct-
 ness of the implementation of the ICD simulation.
 
