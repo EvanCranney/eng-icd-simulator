@@ -185,7 +185,7 @@ package body ICD is
       --  sufficiently large to cause the heart to stop.
       check_have_observations:
          for I in HISTORY_START_INDEX .. (HISTORY_START_INDEX +
-           NUM_DIFFS_FOR_ESTIMATE - 1) loop
+           NUM_DIFFS_FOR_ESTIMATE + 1) loop
             if Def.History(I).Rate <= Measures.BPM(0) then
                return False;
             end if;
@@ -195,7 +195,7 @@ package body ICD is
       SumAbsDiffs := 0;
       sum_abs_diffs:
          for I in HISTORY_START_INDEX .. HISTORY_START_INDEX +
-           NUM_DIFFS_FOR_ESTIMATE loop
+           (NUM_DIFFS_FOR_ESTIMATE - 1) loop
             SumAbsDiffs := SumAbsDiffs +
               abs(Def.History(I).Rate-Def.History(I+1).Rate);
         end loop sum_abs_diffs;
