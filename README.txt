@@ -32,5 +32,6 @@ requirements (e.g. low coupling between components, consistent style).
 (5) UNIT, INTEGRATION, & ACCEPTANCE TESTING
 
 Each team member unit-tested the other's code on manually generated test
-cases (to cover corner-cases). Integration testing and requirements tracing
-(from the list generated in (2) to functionality) was done as a pair.
+cases (to cover corner-cases) (using customized implementations of
+Heart.adb). Integration testing and requirements tracing (from the list
+generated in (2) to functionality) was done as a pair.

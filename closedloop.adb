@@ -133,7 +133,7 @@ package body ClosedLoop is
            (MessageType => Network.ReadSettingsResponse,
             RDestination => Msg.RSource,
             RTachyBound => ICD.GetTachyThresh(Def),
-            RJoulesToDeliver => ICD.GetTachyImpulse(Def)));
+            RJoulesToDeliver => ICD.GetFibImpulse(Def)));
       end if;
    end;
 
@@ -146,6 +146,8 @@ package body ClosedLoop is
          (not ICD.IsOn(Def))
       then
          Put_Line("... authorized");
+         Put_Line("TachyBound -> " & Msg.CTachyBound'Image);
+         Put_Line("JoulesToDeliver ->" & Msg.CJoulesToDeliver'Image);
          -- change settings
          ICD.SetTachyThresh(Def, Msg.CTachyBound);
          ICD.SetFibImpulse(Def, Msg.CJoulesToDeliver);

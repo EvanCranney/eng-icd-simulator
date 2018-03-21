@@ -172,8 +172,8 @@ package body ICD is
       --  the measurements of heart rates at greatly separated times
       --  in the calculation; without this check, there is a tendency to
       --  incorrectly infer ventricular fibrillation from medical history.
-      if Def.History(NUM_DIFFS_FOR_ESTIMATE + 1).Time
-        - Def.History(1).Time > TickCount(NUM_DIFFS_FOR_ESTIMATE) then
+      if Def.History(1).Time - Def.History(NUM_DIFFS_FOR_ESTIMATE + 1).Time
+        > TickCount(NUM_DIFFS_FOR_ESTIMATE) then
          return False;
       end if;
 
@@ -186,7 +186,7 @@ package body ICD is
       check_have_observations:
          for I in HISTORY_START_INDEX .. HISTORY_START_INDEX +
            NUM_DIFFS_FOR_ESTIMATE loop
-            if Def.History(I).Rate = Measures.BPM'First then
+            if Def.History(I).Rate <= Measures.BPM(0) then
                return False;
             end if;
          end loop check_have_observations;
@@ -205,7 +205,15 @@ package body ICD is
        
       -- infer ventricular fibrillation if average rate change
       --  exceeds predefined limit 
-      return AvgRateChange >= Float(DEFAULT_FIB_THRESH);
+      if Float(AvgRateChange) >= Float(Integer(DEFAULT_FIB_THRESH)) then
+         Put_Line("AvgRateChange as Int:" & AvgRateChange'Image);
+         Put_Line("AvgRateChange:" & AvgRateChange'Image);
+         Put_Line("FibThresh as Int:" & DEFAULT_FIB_THRESH'Image);
+         Put_Line("FibThresh:" & Float(DEFAULT_FIB_THRESH)'Image);
+         return True;
+      else
+         return False;
+      end if;
     end IsFibrillating;
 
    -- computes the number of ticks between each impulse for the
@@ -257,6 +265,7 @@ package body ICD is
          Def.ImpulseStart := ICD.GetTime(Def);
          Def.ImpulseFreq := ComputeImpulseFreq(Def.History(1).Rate);
          Def.SendImpulse := True;
+         Def.ImpulseCount := Def.ImpulseCount - 1;
         
       -- check if ventricular fibrillation detected
       elsif IsFibrillating(Def) then
