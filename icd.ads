@@ -33,9 +33,8 @@ package ICD is
    DEFAULT_TACHY_THRESH : constant Measures.BPM := Measures.BPM(100);
    DEFAULT_TACHY_IMPULSE : constant Measures.Joules := Measures.Joules(2);
    DEFAULT_TACHY_IMPULSE_COUNT : constant Integer := 10;
-   DEFAULT_FIB_THRESH : constant Float := 10.0;
-    --Measures.BPM := Measures.BPM(10);
-   DEFAULT_FIB_IMPULSE : constant := Measures.Joules(30);
+   DEFAULT_FIB_THRESH : constant Measures.BPM := Measures.BPM(10);
+   DEFAULT_FIB_IMPULSE : constant Measures.Joules := Measures.Joules(30);
 
    -- number of heart rate records to estimate average change in rate
    NUM_DIFFS_FOR_ESTIMATE : constant Integer := 6;

@@ -43,7 +43,7 @@ package body ICD is
       end if;
    end On;
 
-   -- switch to OFF mode -- FLAG : REFACTOR WITH CONSTANTS OR RECORD
+   -- switch to OFF mode 
    procedure Off(Def : in out ICDType) is
    begin
       if IsOn(Def) then
@@ -155,6 +155,7 @@ package body ICD is
    -- check if heart rate history indicates tacycardia
    function IsTachycardic(Def : in ICDType) return Boolean is
    begin
+      return false;
       -- check if most recent heart rate exceeds tachycardia threshold
       return Def.History(HISTORY_START_INDEX).Rate >
          Def.Settings.TachyThresh;
@@ -197,7 +198,7 @@ package body ICD is
          for I in HISTORY_START_INDEX .. HISTORY_START_INDEX +
            (NUM_DIFFS_FOR_ESTIMATE - 1) loop
             SumAbsDiffs := SumAbsDiffs +
-              abs(Def.History(I).Rate-Def.History(I+1).Rate);
+              abs(Def.History(I).Rate-Def.History(I + 1).Rate);
         end loop sum_abs_diffs;
 
       -- then divide by number of observations
