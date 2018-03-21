@@ -155,7 +155,6 @@ package body ICD is
    -- check if heart rate history indicates tacycardia
    function IsTachycardic(Def : in ICDType) return Boolean is
    begin
-      return false;
       -- check if most recent heart rate exceeds tachycardia threshold
       return Def.History(HISTORY_START_INDEX).Rate >
          Def.Settings.TachyThresh;
