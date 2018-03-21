@@ -202,16 +202,14 @@ package body ICD is
         end loop sum_abs_diffs;
 
       -- then divide by number of observations
-      Put_Line("SumAbsDiffs :" & SumAbsDiffs'Image);
+      Put_Line("SumAbsDiffs: " & SumAbsDiffs'Image);
       AvgRateChange := Float(SumAbsDiffs) / Float(NUM_DIFFS_FOR_ESTIMATE);
        
       -- infer ventricular fibrillation if average rate change
       --  exceeds predefined limit 
       if Float(AvgRateChange) >= Float(DEFAULT_FIB_THRESH) then
-         Put_Line("AvgRateChange as Int:" & AvgRateChange'Image);
-         Put_Line("AvgRateChange:" & AvgRateChange'Image);
-         Put_Line("FibThresh as Int:" & DEFAULT_FIB_THRESH'Image);
-         Put_Line("FibThresh:" & Float(DEFAULT_FIB_THRESH)'Image);
+         Put_Line("AvgRateChange: " & AvgRateChange'Image);
+         Put_Line("FibThresh: " & Float(DEFAULT_FIB_THRESH)'Image);
          return True;
       else
          return False;
