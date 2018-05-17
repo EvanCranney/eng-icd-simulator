@@ -43,7 +43,7 @@ package body ICD is
       end if;
    end On;
 
-   -- switch to OFF mode -- FLAG : REFACTOR WITH CONSTANTS OR RECORD
+   -- switch to OFF mode 
    procedure Off(Def : in out ICDType) is
    begin
       if IsOn(Def) then
@@ -197,20 +197,18 @@ package body ICD is
          for I in HISTORY_START_INDEX .. HISTORY_START_INDEX +
            (NUM_DIFFS_FOR_ESTIMATE - 1) loop
             SumAbsDiffs := SumAbsDiffs +
-              abs(Def.History(I).Rate-Def.History(I+1).Rate);
+              abs(Def.History(I).Rate-Def.History(I + 1).Rate);
         end loop sum_abs_diffs;
 
       -- then divide by number of observations
-      Put_Line("SumAbsDiffs :" & SumAbsDiffs'Image);
+      Put_Line("SumAbsDiffs: " & SumAbsDiffs'Image);
       AvgRateChange := Float(SumAbsDiffs) / Float(NUM_DIFFS_FOR_ESTIMATE);
        
       -- infer ventricular fibrillation if average rate change
       --  exceeds predefined limit 
       if Float(AvgRateChange) >= Float(DEFAULT_FIB_THRESH) then
-         Put_Line("AvgRateChange as Int:" & AvgRateChange'Image);
-         Put_Line("AvgRateChange:" & AvgRateChange'Image);
-         Put_Line("FibThresh as Int:" & DEFAULT_FIB_THRESH'Image);
-         Put_Line("FibThresh:" & Float(DEFAULT_FIB_THRESH)'Image);
+         Put_Line("AvgRateChange: " & AvgRateChange'Image);
+         Put_Line("FibThresh: " & Float(DEFAULT_FIB_THRESH)'Image);
          return True;
       else
          return False;
